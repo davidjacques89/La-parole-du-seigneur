@@ -3,7 +3,7 @@
 A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 *Un addon pour World of Warcraft: Forever qui prêche les paroles du Seigneur dans le chat.*
 
-- **102 built-in sayings**: 78 Bible verses (Louis Segond 1910 in French, King James in English, both public domain) and 24 traditional Catholic sayings from Quebec
+- **124 built-in sayings**: 78 Bible verses (Louis Segond 1910 in French, King James in English, both public domain) and 46 traditional Catholic sayings, prayers and dictons from Quebec
 - **Three languages**: English (default), Français, and Québec (the full French library plus the Québec sayings)
 - **Favorites** are picked more often (3 times by default, adjustable from 1 to 5), and you can exclude sayings or turn whole categories off
 - Add your own sayings in game
@@ -46,14 +46,20 @@ Turn on Lua error display in game with `/console scriptErrors 1`.
 |---|---|---|---|
 | English (default) | `/parole lang en` | English Bible verses (KJV) | English |
 | Français | `/parole langue fr` | French Bible verses (Louis Segond 1910) | French |
-| Québec | `/parole langue qc` | All the French verses **plus** 24 Quebec Catholic sayings | French |
+| Québec | `/parole langue qc` | 46 Quebec Catholic sayings, with the French verses mixed in (70% Québec by default) | French |
 
 New installs always start in English, whatever the game client's language. Upgrading from 0.1.0 also
 switches you to English once (with a message), unless you had picked French yourself.
 
-The Québec sayings are traditional expressions, prayers and invocations ("Offre ça au bon Dieu",
-"Que le bon Dieu vous le rende", the Sign of the Cross, invocations to Sainte Anne...). Their
-"reference" is a label such as *Dicton populaire* or *Prière traditionnelle*, not an author.
+In Québec mode, **70% of the sayings come from the Québec list** and 30% from the French verses and your own
+sayings. Change it with `/parole quebec <0-100>`: 100 means Québec sayings only, 0 means verses only.
+Favorites, exclusions and categories still apply, and the same saying never repeats right away.
+
+The Québec sayings are traditional expressions, prayers and dictons: everyday sayings ("Offre ça au bon Dieu",
+"Que le bon Dieu vous le rende"), prayers in their older wordings (Notre Père, Je vous salue Marie, the Angélus,
+the Sign of the Cross, the Bénédicité), invocations to Sainte Anne, and weather dictons tied to saints' days.
+Their "reference" is a label such as *Dicton populaire* or *Angélus*, not an author. Most are shared with the rest
+of the French-speaking Catholic world; they are the ones Quebec Catholic culture kept alive, not all invented there.
 
 ## Commands
 
@@ -65,6 +71,7 @@ The Québec sayings are traditional expressions, prayers and invocations ("Offre
 | `/parole guilde` (or `dire`, `crier`, `emote`, `groupe`, `raid`, `moi`) | Preach once on that channel |
 | `/parole canal <channel>` / `channel` | Change the default channel |
 | `/parole langue en`, `fr` or `qc` / `lang` | Choose the language mode |
+| `/parole quebec 70` | Share of Québec sayings in Québec mode (0-100, default 70) |
 | `/parole favori Jean 3:16` / `fav John 3:16` | Add or remove a favorite, by reference |
 | `/parole favoris` / `favs` | List your favorites |
 | `/parole poids 1-5` / `weight` | How much more often favorites come up (default 3) |
@@ -82,6 +89,7 @@ The Québec sayings are traditional expressions, prayers and invocations ("Offre
 | `/parole reset` | Reset settings to defaults (your sayings, favorites and exclusions are kept) |
 
 Categories: Words of Jesus, Proverbs, Psalms, Ecclesiastes, Other scripture, Québec.
+The Québec share only applies in Québec mode; if the Québec category is turned off, only verses are used.
 Favorites and exclusions are saved by saying, so they stay when you switch language.
 
 An in-game settings screen and library browser are planned for the next version.

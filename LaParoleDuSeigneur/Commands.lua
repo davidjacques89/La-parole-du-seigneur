@@ -218,6 +218,22 @@ commands.category = function(rest)
     ns.Print((enable and L.CAT_ON or L.CAT_OFF):format(category[ns.UILang()]))
 end
 
+-- /parole quebec       -> show the share of Québec sayings in Québec mode
+-- /parole quebec 70    -> set it (0 = verses only, 100 = Québec sayings only)
+commands.quebec = function(rest)
+    if not rest or rest == "" then
+        ns.Print(L.QC_SHARE_INFO:format(ns.QuebecShare()))
+        return
+    end
+    local n = tonumber(rest)
+    if not n or n < 0 or n > 100 then
+        ns.Print(L.QC_SHARE_BAD)
+        return
+    end
+    ns.db.quebecShare = math.floor(n)
+    ns.Print(L.QC_SHARE_SET:format(ns.db.quebecShare, 100 - ns.db.quebecShare))
+end
+
 commands.reset = function()
     ns.ResetSettings()
     ns.UpdateButton()
@@ -244,6 +260,7 @@ local aliases = {
     poids = "weight", weight = "weight",
     categorie = "category", ["catégorie"] = "category", category = "category",
     categories = "category", ["catégories"] = "category",
+    quebec = "quebec", ["québec"] = "quebec", qc = "quebec",
     reset = "reset",
 }
 

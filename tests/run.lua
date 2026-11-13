@@ -137,8 +137,11 @@ end)
 ---------------------------------------------------------------------------
 -- Library, languages and data integrity
 ---------------------------------------------------------------------------
-test("library size is about 100 and ids are unique and well formed", function()
-    assert(#ns.sayings >= 95 and #ns.sayings <= 110, "got " .. #ns.sayings)
+test("library: 78 verses plus 40+ Québec sayings, ids unique and well formed", function()
+    local nQuebec = 0
+    for _, e in ipairs(ns.sayings) do if e.cat == "quebec" then nQuebec = nQuebec + 1 end end
+    eq(#ns.sayings - nQuebec, 78, "Bible verses")
+    assert(nQuebec >= 40, "expected 40+ Québec sayings, got " .. nQuebec)
     local seen = {}
     local cats = {}
     for _, c in ipairs(ns.CATEGORIES) do cats[c.key] = true end
@@ -155,7 +158,7 @@ test("library size is about 100 and ids are unique and well formed", function()
             if v then
                 assert(not v:find("|", 1, true), e.id .. "." .. field .. " has a pipe")
                 assert(not v:find("[\r\n]"), e.id .. "." .. field .. " has a line break")
-                assert(#v < 250, e.id .. "." .. field .. " is too long")
+                assert(#v < 500, e.id .. "." .. field .. " is too long")
             end
         end
     end
@@ -454,6 +457,162 @@ test("Québec sayings need Québec mode: favoring one in French mode explains wh
 end)
 
 ---------------------------------------------------------------------------
+-- Québec mode weighting (option A)
+---------------------------------------------------------------------------
+local function quebecFraction(picks)
+    ns.ResetBag()
+    local q = 0
+    for _ = 1, picks do
+        if ns.NextSaying().cat == "quebec" then q = q + 1 end
+    end
+    return q / picks
+end
+
+test("Québec share defaults to 70% and Québec mode picks Québec sayings about 70% of the time", function()
+    eq(LaParoleDuSeigneurDB.quebecShare, 70)
+    eq(ns.QuebecShare(), 70)
+    math.randomseed(2024)
+    LaParoleDuSeigneurDB.lang = "qc"
+    local f = quebecFraction(20000)
+    assert(f > 0.66 and f < 0.74, "expected about 0.70, got " .. f)
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+test("quebec command: set, show, validate; 100 = Québec only, 0 = verses only", function()
+    slash("lang qc")
+    slash("quebec")
+    assert(printedContains("70 %"), "info should show 70 %")
+    slash("quebec 100")
+    eq(LaParoleDuSeigneurDB.quebecShare, 100)
+    eq(quebecFraction(3000), 1)
+    slash("quebec 0")
+    eq(quebecFraction(3000), 0)
+    slash("québec 45")
+    eq(LaParoleDuSeigneurDB.quebecShare, 45)
+    assert(printedContains("45 %") and printedContains("55 %"))
+    local f = quebecFraction(20000)
+    assert(f > 0.41 and f < 0.49, "expected about 0.45, got " .. f)
+    slash("quebec 101")  assert(printedContains("0 à 100")) eq(LaParoleDuSeigneurDB.quebecShare, 45)
+    slash("quebec -5")   eq(LaParoleDuSeigneurDB.quebecShare, 45)
+    slash("quebec abc")  eq(LaParoleDuSeigneurDB.quebecShare, 45)
+    slash("qc 80")       eq(LaParoleDuSeigneurDB.quebecShare, 80)
+    slash("lang en")
+    slash("quebec 70")
+    assert(printedContains("Québec mode: 70% Québec sayings, 30% verses"))
+end)
+
+test("the Québec share has no effect in English or French mode (no Québec sayings there)", function()
+    LaParoleDuSeigneurDB.quebecShare = 100
+    for _, mode in ipairs({ "en", "fr" }) do
+        LaParoleDuSeigneurDB.lang = mode
+        eq(quebecFraction(2000), 0, mode)
+    end
+    LaParoleDuSeigneurDB.quebecShare = 70
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+test("Québec mode with the Québec category off falls back to verses; verses off falls back to Québec", function()
+    LaParoleDuSeigneurDB.lang = "qc"
+    ns.SetCategory("quebec", false)
+    eq(quebecFraction(2000), 0)
+    ns.SetCategory("quebec", true)
+    for _, c in ipairs(ns.CATEGORIES) do
+        if c.key ~= "quebec" then ns.SetCategory(c.key, false) end
+    end
+    eq(quebecFraction(2000), 1, "only Québec sayings left")
+    for _, c in ipairs(ns.CATEGORIES) do ns.SetCategory(c.key, true) end
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+test("Québec mode: the player's own sayings share the 30% side with the verses", function()
+    LaParoleDuSeigneurDB.lang = "qc"
+    slash("add Ma parole perso")
+    ns.ResetBag()
+    local custom, picks = 0, 20000
+    for _ = 1, picks do
+        if ns.NextSaying().text == "Ma parole perso" then custom = custom + 1 end
+    end
+    -- 30% of picks go to the verse group (78 verses + 1 custom), so about 0.3/79 each.
+    local expected = picks * 0.30 / 79
+    assert(custom > expected * 0.5 and custom < expected * 1.8, ("custom %d vs expected %.0f"):format(custom, expected))
+    slash("quebec 0")
+    ns.ResetBag()
+    local found = false
+    for _ = 1, 600 do if ns.NextSaying().text == "Ma parole perso" then found = true break end end
+    assert(found, "own saying must still come up when Québec share is 0")
+    slash("quebec 70")
+    slash("remove 1")
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+test("Québec mode: favorites still weigh more inside the Québec group, and exclusions apply", function()
+    math.randomseed(777)
+    LaParoleDuSeigneurDB.lang = "qc"
+    LaParoleDuSeigneurDB.quebecShare = 100
+    LaParoleDuSeigneurDB.favorites = { qc_notre_pere = true }
+    LaParoleDuSeigneurDB.excluded = { qc_angelus1 = true }
+    LaParoleDuSeigneurDB.favoriteWeight = 5
+    ns.ResetBag()
+    local counts, picks = {}, 30000
+    for _ = 1, picks do
+        local s = ns.NextSaying()
+        counts[s.id] = (counts[s.id] or 0) + 1
+    end
+    eq(counts.qc_angelus1, nil, "excluded saying was picked")
+    local others, n = 0, 0
+    for id, c in pairs(counts) do
+        if id ~= "qc_notre_pere" then others = others + c n = n + 1 end
+    end
+    local ratio = counts.qc_notre_pere / (others / n)
+    assert(ratio > 2.5, "favorite ratio too low: " .. ratio)
+    LaParoleDuSeigneurDB.favorites, LaParoleDuSeigneurDB.excluded = {}, {}
+    LaParoleDuSeigneurDB.favoriteWeight, LaParoleDuSeigneurDB.quebecShare = 3, 70
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+test("Québec mode: no immediate repeats across both groups", function()
+    LaParoleDuSeigneurDB.lang = "qc"
+    ns.ResetBag()
+    local last
+    for _ = 1, 5000 do
+        local s = ns.NextSaying()
+        assert(s.id ~= last, "immediate repeat of " .. s.id)
+        last = s.id
+    end
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+test("existing 0.2.0 saved settings (no quebecShare) get the 70% default", function()
+    LaParoleDuSeigneurDB = { lang = "qc", schema = 2, custom = {}, favorites = { jn3_16 = true } }
+    ns.eventFrame:RegisterEvent("ADDON_LOADED")
+    fire("ADDON_LOADED", ADDON)
+    eq(LaParoleDuSeigneurDB.quebecShare, 70)
+    eq(LaParoleDuSeigneurDB.lang, "qc")
+    eq(LaParoleDuSeigneurDB.favorites.jn3_16, true)
+    LaParoleDuSeigneurDB = nil
+    ns.eventFrame:RegisterEvent("ADDON_LOADED")
+    fire("ADDON_LOADED", ADDON)
+    ns.ResetBag()
+end)
+
+test("reset puts the Québec share back to 70", function()
+    slash("quebec 20")
+    slash("reset")
+    eq(LaParoleDuSeigneurDB.quebecShare, 70)
+end)
+
+test("the new prayers split into valid chat lines in the right order", function()
+    LaParoleDuSeigneurDB.lang = "qc"
+    local np = ns.FindSayingById("qc_notre_pere")
+    local chunks = ns.SplitMessage(ns.FormatSaying(np))
+    assert(#chunks >= 2, "Notre Père should need two chat lines")
+    local joined = table.concat(chunks, " ")
+    assert(joined:find("^« Notre Père, qui êtes aux cieux"), joined:sub(1, 40))
+    assert(joined:find("Ainsi soit%-il%. » — Notre Père %(ancienne version%)$"), joined:sub(-60))
+    LaParoleDuSeigneurDB.lang = "en"
+end)
+
+---------------------------------------------------------------------------
 -- Preaching, channels, splitting (unchanged behavior from 0.1.0)
 ---------------------------------------------------------------------------
 test("/parole guilde sends once to guild, default unchanged", function()
@@ -640,7 +799,7 @@ end)
 
 test("help text mentions the new commands in both interface languages", function()
     slash("help")
-    assert(printedContains("/parole fav") and printedContains("/parole weight") and printedContains("/parole category"))
+    assert(printedContains("/parole fav") and printedContains("/parole weight") and printedContains("/parole category") and printedContains("/parole quebec"))
     slash("lang fr")
     printed = {}
     slash("aide")

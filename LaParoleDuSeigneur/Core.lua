@@ -19,6 +19,7 @@ local defaults = {
     excluded = {},
     categories = {},
     favoriteWeight = 3,
+    quebecShare = 70,
     useBuiltin = true,
     custom = {},
     autoEnabled = false,
@@ -207,7 +208,6 @@ function ns.FavoriteWeight()
     return math.min(5, math.max(1, math.floor(tonumber(ns.db.favoriteWeight) or 3)))
 end
 
--- Weighted pick: favorites count `favoriteWeight` times, everything else once.
 -- The last few picks are set aside so the same saying never comes back right away.
 local recent = {}
 
@@ -224,19 +224,21 @@ local function recentWindow(poolSize)
     return math.max(1, math.min(8, math.floor(poolSize / 3)))
 end
 
-function ns.NextSaying()
-    local pool = ns.GetPool()
-    if #pool == 0 then
-        return nil
-    end
-    local window = recentWindow(#pool)
+function ns.QuebecShare()
+    return math.min(100, math.max(0, math.floor(tonumber(ns.db.quebecShare) or 70)))
+end
+
+-- Weighted pick inside one group of sayings: favorites count `favoriteWeight` times,
+-- everything else once, skipping the recent picks.
+local function pickFrom(group)
+    local window = recentWindow(#group)
     local blocked = {}
     for i = math.max(1, #recent - window + 1), #recent do
         blocked[recent[i]] = true
     end
 
     local weight, candidates, total = ns.FavoriteWeight(), {}, 0
-    for _, shown in ipairs(pool) do
+    for _, shown in ipairs(group) do
         if not blocked[shown.id] then
             local w = shown.favorite and weight or 1
             candidates[#candidates + 1] = { shown = shown, w = w }
@@ -252,6 +254,39 @@ function ns.NextSaying()
             break
         end
     end
+    return chosen
+end
+
+-- In Québec mode the pool has two groups: the Québec sayings, and everything else
+-- (French verses and the player's own sayings). Each pick goes to the Québec group
+-- `quebecShare` percent of the time. If one group is empty the other is used.
+-- In English and French mode there is only one group.
+function ns.NextSaying()
+    local pool = ns.GetPool()
+    if #pool == 0 then
+        return nil
+    end
+
+    local group = pool
+    if ns.GetLang() == "qc" then
+        local quebec, other = {}, {}
+        for _, shown in ipairs(pool) do
+            if shown.cat == "quebec" then
+                quebec[#quebec + 1] = shown
+            else
+                other[#other + 1] = shown
+            end
+        end
+        if #quebec > 0 and #other > 0 then
+            group = (math.random() * 100 < ns.QuebecShare()) and quebec or other
+        elseif #quebec > 0 then
+            group = quebec
+        else
+            group = other
+        end
+    end
+
+    local chosen = pickFrom(group)
     recent[#recent + 1] = chosen.id
     return chosen
 end
