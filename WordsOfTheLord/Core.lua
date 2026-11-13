@@ -294,7 +294,7 @@ end
 -- "« text » — ref" in French and Québec modes, "text" — ref in English.
 function ns.FormatSaying(shown)
     local quoted
-    if ns.UILang() == "fr" then
+    if ns.GetLang() ~= "en" then   -- quotes follow the language of the sayings
         quoted = "« " .. shown.text .. " »"
     else
         quoted = "\"" .. shown.text .. "\""
@@ -321,6 +321,8 @@ local function foldRef(text)
     return (text:gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
+ns.Fold = foldRef
+
 function ns.FindSayingByRef(ref)
     local wanted = foldRef(ref)
     if wanted == "" then
@@ -333,7 +335,7 @@ function ns.FindSayingByRef(ref)
     end
 end
 
--- Toggles used by commands now and by the library window later.
+-- Toggles used by the commands and by the book window.
 function ns.ToggleFavorite(id)
     if ns.db.favorites[id] then
         ns.db.favorites[id] = nil
@@ -352,6 +354,23 @@ function ns.ToggleExcluded(id)
     ns.db.excluded[id] = true
     ns.db.favorites[id] = nil
     return true
+end
+
+-- The player's own sayings. Used by the commands and by the book window.
+function ns.AddCustom(text)
+    text = ns.Sanitize(text or "")
+    if text == "" then
+        return nil
+    end
+    table.insert(ns.db.custom, text)
+    return #ns.db.custom
+end
+
+function ns.RemoveCustom(index)
+    if not index or not ns.db.custom[index] then
+        return nil
+    end
+    return table.remove(ns.db.custom, index)
 end
 
 function ns.SetCategory(cat, enabled)
@@ -549,12 +568,12 @@ function WordsOfTheLord_OnAddonCompartmentClick(_, button)
     if button == "RightButton" then
         ns.CycleChannel()
     else
-        ns.Preach()
+        ns.ToggleWindow()
     end
 end
 
 function WordsOfTheLord_OnAddonCompartmentEnter(_, menuButton)
-    ns.ShowTooltip(menuButton)
+    ns.ShowTooltip(menuButton, true)
 end
 
 function WordsOfTheLord_OnAddonCompartmentLeave()

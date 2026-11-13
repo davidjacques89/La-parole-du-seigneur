@@ -6,10 +6,15 @@ local L = ns.L
 local ICON = "Interface\\Icons\\Spell_Holy_HolyBolt"
 local button
 
-function ns.ShowTooltip(owner)
+function ns.ShowTooltip(owner, fromCompartment)
     GameTooltip:SetOwner(owner, "ANCHOR_LEFT")
     GameTooltip:AddLine(L.TOOLTIP_TITLE)
-    GameTooltip:AddLine(L.TOOLTIP_LEFT:format(ns.ChannelLabel(ns.db.channel)), 1, 1, 1)
+    if fromCompartment then
+        GameTooltip:AddLine(L.TOOLTIP_OPEN, 1, 1, 1)
+    else
+        GameTooltip:AddLine(L.TOOLTIP_LEFT:format(ns.ChannelLabel(ns.db.channel)), 1, 1, 1)
+        GameTooltip:AddLine(L.TOOLTIP_SHIFT, 1, 1, 1)
+    end
     GameTooltip:AddLine(L.TOOLTIP_RIGHT, 1, 1, 1)
     if owner == button and not ns.db.button.locked then
         GameTooltip:AddLine(L.TOOLTIP_DRAG, 0.7, 0.7, 0.7)
@@ -72,6 +77,8 @@ function ns.CreateButton()
     button:SetScript("OnClick", function(_, mouseButton)
         if mouseButton == "RightButton" then
             ns.CycleChannel()
+        elseif IsShiftKeyDown and IsShiftKeyDown() then
+            ns.ToggleWindow()
         else
             ns.Preach()
         end

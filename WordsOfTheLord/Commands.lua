@@ -17,6 +17,10 @@ end
 
 local commands = {}
 
+commands.book = function()
+    ns.ToggleWindow()
+end
+
 commands.help = function()
     for _, line in ipairs(L.HELP) do
         ns.Print(line)
@@ -34,13 +38,12 @@ commands.channel = function(rest)
 end
 
 commands.add = function(rest)
-    local text = ns.Sanitize(rest)
-    if text == "" then
+    local index = ns.AddCustom(rest)
+    if not index then
         commands.help()
         return
     end
-    table.insert(ns.db.custom, text)
-    ns.Print(L.ADDED:format(#ns.db.custom))
+    ns.Print(L.ADDED:format(index))
 end
 
 commands.list = function()
@@ -56,12 +59,11 @@ commands.list = function()
 end
 
 commands.remove = function(rest)
-    local index = tonumber(rest)
-    if not index or not ns.db.custom[index] then
+    local removed = ns.RemoveCustom(tonumber(rest))
+    if not removed then
         ns.Print(L.BAD_INDEX)
         return
     end
-    local removed = table.remove(ns.db.custom, index)
     ns.Print(L.REMOVED:format(preview(removed)))
 end
 
@@ -244,6 +246,9 @@ end
 -- French and English names for each subcommand.
 local aliases = {
     aide = "help", help = "help", ["?"] = "help",
+    livre = "book", book = "book", fenetre = "book", ["fenêtre"] = "book", window = "book",
+    ouvrir = "book", open = "book", options = "book", config = "book",
+    reglages = "book", ["réglages"] = "book", settings = "book",
     canal = "channel", channel = "channel",
     ajouter = "add", add = "add",
     liste = "list", list = "list",
@@ -277,6 +282,9 @@ function ns.HandleSlash(input)
     local name = aliases[word]
     if name then
         commands[name](rest)
+        if name ~= "book" and ns.RefreshWindow then
+            ns.RefreshWindow()   -- keep an open book in step with what the command changed
+        end
         return
     end
 

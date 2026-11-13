@@ -6,8 +6,10 @@ A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 - **124 built-in sayings**: 78 Bible verses (Louis Segond 1910 in French, King James in English, both public domain) and 46 traditional Catholic sayings, prayers and dictons from Quebec
 - **Three languages**: English (default), Français, and Québec (the full French library plus the Québec sayings)
 - **Favorites** are picked more often (3 times by default, adjustable from 1 to 5), and you can exclude sayings or turn whole categories off
+- **The book**: one tabbed window styled as an open book, with ribbon tabs for the Library (search, category filters, a diamond to mark favorites), Favorites, Settings and My sayings. Open it with `/parole book`, Shift-click on the button, or a click on the addon's entry in the minimap addon list
+- **The interface follows the game's language**: French on a French client, English on every other client
 - Add your own sayings in game
-- One-click button (left-click preaches, right-click changes channel, drag to move)
+- One-click button (left-click preaches, Shift-click opens the book, right-click changes channel, drag to move)
 - Say, yell, emote, group (party/raid/instance picked automatically), raid, guild, or only yourself
 - Optional auto-preach every N minutes (2 minutes minimum, paused in combat)
 - Optional reactions: a saying to your group when you die and when you come back
@@ -42,13 +44,16 @@ Turn on Lua error display in game with `/console scriptErrors 1`.
 
 ## Languages
 
-| Mode | Command | Sayings | Interface text |
-|---|---|---|---|
-| English (default) | `/parole lang en` | English Bible verses (KJV) | English |
-| Français | `/parole langue fr` | French Bible verses (Louis Segond 1910) | French |
-| Québec | `/parole langue qc` | 46 Quebec Catholic sayings, with the French verses mixed in (70% Québec by default) | French |
+| Mode | Command | Sayings |
+|---|---|---|
+| English (default) | `/parole lang en` | English Bible verses (KJV) |
+| Français | `/parole langue fr` | French Bible verses (Louis Segond 1910) |
+| Québec | `/parole langue qc` | 46 Quebec Catholic sayings, with the French verses mixed in (70% Québec by default) |
 
-New installs always start in English, whatever the game client's language. Upgrading from 0.1.0 also
+This only chooses the language of the **sayings**. The interface (the book, messages, help) always follows the
+game client: a French client gets French, every other client gets English.
+
+New installs always start with English sayings, whatever the game client's language. Upgrading from 0.1.0 also
 switches you to English once (with a message), unless you had picked French yourself.
 
 In Québec mode, **70% of the sayings come from the Québec list** and 30% from the French verses and your own
@@ -68,6 +73,7 @@ of the French-speaking Catholic world; they are the ones Quebec Catholic culture
 | Command | What it does |
 |---|---|
 | `/parole` | Preach on the default channel |
+| `/parole livre` / `book` | Open or close the book (library, favorites, settings, your own sayings) |
 | `/parole guilde` (or `dire`, `crier`, `emote`, `groupe`, `raid`, `moi`) | Preach once on that channel |
 | `/parole canal <channel>` / `channel` | Change the default channel |
 | `/parole langue en`, `fr` or `qc` / `lang` | Choose the language mode |
