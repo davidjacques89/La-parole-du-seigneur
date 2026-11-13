@@ -299,17 +299,9 @@ function ns.NextSaying()
 end
 
 -- "« text » — ref" in French and Québec modes, "text" — ref in English.
+-- What goes out in chat: just the saying's text, with no quotation marks, reference or category.
 function ns.FormatSaying(shown)
-    local quoted
-    if ns.GetLang() ~= "en" then   -- quotes follow the language of the sayings
-        quoted = "« " .. shown.text .. " »"
-    else
-        quoted = "\"" .. shown.text .. "\""
-    end
-    if shown.ref and shown.ref ~= "" then
-        quoted = quoted .. " — " .. shown.ref
-    end
-    return ns.Sanitize(quoted)
+    return ns.Sanitize(shown.text)
 end
 
 function ns.FindSayingById(id)

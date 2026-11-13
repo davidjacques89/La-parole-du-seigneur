@@ -6,13 +6,14 @@ A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 - **124 built-in sayings**: 78 Bible verses (Louis Segond 1910 in French, King James in English, both public domain) and 46 traditional Catholic sayings, prayers and dictons from Quebec
 - **Three languages**: English (default), Français, and Québec (the full French library plus the Québec sayings)
 - **Favorites** are picked more often (3 times by default, adjustable from 1 to 5), and you can exclude sayings or turn whole categories off
-- **The book**: one tabbed window styled as an open book, with ribbon tabs for the Library (search, category filters, a diamond to mark favorites), Favorites, Settings and My sayings. Open it with `/parole book`, Shift-click on the minimap button, or a click on the addon's entry in the minimap addon list
+- **The book**: one tabbed window styled as an open book, with ribbon tabs for the Library (search, category filters, a diamond to mark favorites), Favorites, Settings and My sayings. Open it with `/parole book`, middle-click on the minimap button, or a click on the addon's entry in the minimap addon list
 - **The interface follows the game's language**: French on a French client, English on every other client
 - Add your own sayings in game
-- **Minimap button** (left-click preaches, Shift-click opens the book, right-click changes channel, drag it around the edge of the minimap)
+- **Minimap button** (left-click preaches, middle-click opens the book, right-click changes channel, drag it around the edge of the minimap)
 - Say, yell, emote, group (party/raid/instance picked automatically), raid, guild, or only yourself
 - Optional auto-preach every N minutes (2 minutes minimum, paused in combat)
 - Optional reactions: a saying to your group when you die and when you come back
+- Chat shows only the saying itself: no quotation marks, reference or category
 - The same saying never comes up twice in a row
 - Long sayings are split cleanly under WoW's 255-byte chat limit
 

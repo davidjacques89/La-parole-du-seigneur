@@ -171,16 +171,21 @@ test("interface language follows the game client, not the saying language", func
     -- the saying language is a separate choice and never changes the interface language
     slash("lang qc")
     eq(ns.UILang(), "en", "Québec sayings on an English client keep the English interface")
-    assert(ns.FormatSaying({ text = "Ave", ref = "x" }):find("^« "), "French sayings use guillemets")
+    eq(ns.FormatSaying({ text = "Ave", ref = "x", cat = "quebec" }), "Ave", "only the text is sent")
     slash("lang en")
 end)
 
-test("first preach on a fresh install is English with straight quotes", function()
+test("first preach on a fresh install is English and sends only the saying's text", function()
     slash("")
     eq(#sent, 1)
     eq(sent[1].chatType, "SAY")
-    assert(sent[1].msg:find('^"') and sent[1].msg:find(" — %S+ %d+:%d+$"), sent[1].msg)
-    assert(not sent[1].msg:find("«"))
+    assert(not sent[1].msg:find('^"') and not sent[1].msg:find("«"), "no quotation marks: " .. sent[1].msg)
+    assert(not sent[1].msg:find(" — ", 1, true), "no reference: " .. sent[1].msg)
+    local jn = ns.FindSayingById("jn3_16")
+    sent = {}
+    ns.Preach(nil, jn)
+    eq(#sent, 1)
+    eq(sent[1].msg, jn.text, "exactly the saying's text")
 end)
 
 test("fresh install prints no upgrade notice", function()
@@ -275,10 +280,22 @@ test("Québec sayings are preachable in Québec mode and absent from the other m
     WordsOfTheLordDB.lang = "en"
 end)
 
-test("French and Québec output uses guillemets", function()
+test("French and Québec output is also just the text: no guillemets, no reference", function()
+    for _, mode in ipairs({ "fr", "qc" }) do
+        slash("lang " .. mode)
+        for _ = 1, 30 do
+            sent = {}
+            slash("")
+            for _, m in ipairs(sent) do
+                assert(not m.msg:find("«") and not m.msg:find("»") and not m.msg:find(" — ", 1, true), m.msg)
+            end
+        end
+    end
     slash("langue fr")
-    slash("")
-    assert(sent[#sent].msg:find("^« ") and sent[#sent].msg:find(" »"), sent[#sent].msg)
+    local jn = ns.FindSayingById("jn3_16")
+    sent = {}
+    ns.Preach(nil, jn)
+    eq(sent[1].msg, jn.text)
     slash("lang en")
 end)
 
@@ -698,8 +715,9 @@ test("the new prayers split into valid chat lines in the right order", function(
     local chunks = ns.SplitMessage(ns.FormatSaying(np))
     assert(#chunks >= 2, "Notre Père should need two chat lines")
     local joined = table.concat(chunks, " ")
-    assert(joined:find("^« Notre Père, qui êtes aux cieux"), joined:sub(1, 40))
-    assert(joined:find("Ainsi soit%-il%. » — Notre Père %(ancienne version%)$"), joined:sub(-60))
+    assert(joined:find("^Notre Père, qui êtes aux cieux"), joined:sub(1, 40))
+    assert(joined:find("Ainsi soit%-il%.$"), joined:sub(-60))
+    assert(not joined:find("ancienne version", 1, true), "the reference label is not sent")
     WordsOfTheLordDB.lang = "en"
 end)
 
@@ -832,8 +850,8 @@ test("reactions: death and revive in group, in each language", function()
     slash("reactions")
     eq(WordsOfTheLordDB.reactions, true)
     state.inGroup = true
-    for mode, want in pairs({ en = { "Father, forgive", "John 11:25" }, fr = { "Père, pardonne", "Jean 11:25" },
-                              qc = { "Père, pardonne", "Jean 11:25" } }) do
+    for mode, want in pairs({ en = { "Father, forgive", "I am the resurrection" }, fr = { "Père, pardonne", "Je suis la résurrection" },
+                              qc = { "Père, pardonne", "Je suis la résurrection" } }) do
         WordsOfTheLordDB.lang = mode
         state.dead = true
         fire("PLAYER_DEAD")
@@ -1104,7 +1122,8 @@ test("book: selecting a saying shows it in the reader; preach sends it", functio
     assert(preach, "preach button missing")
     click(preach)
     eq(#sent, 1)
-    assert(sent[1].msg:find(selected.ref, 1, true), sent[1].msg)
+    assert(sent[1].msg:find(selected.text:sub(1, 25), 1, true), sent[1].msg)
+    assert(not sent[1].msg:find(selected.ref, 1, true), "the reference is not sent: " .. sent[1].msg)
 end)
 
 test("book: diamond marks a favorite, Favorites tab lists it, reader buttons toggle", function()
@@ -1272,7 +1291,7 @@ test("book: a slash command updates an open book", function()
     slash("fav " .. ref)
 end)
 
-test("button: shift-click opens the book instead of preaching", function()
+test("button: shift-click no longer opens the book (it preaches like a normal click)", function()
     local btn
     for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end
     ns.CloseWindow()
@@ -1280,9 +1299,29 @@ test("button: shift-click opens the book instead of preaching", function()
     state.shift = true
     click(btn, "LeftButton")
     state.shift = false
-    eq(#sent, before, "nothing preached")
-    eq(WordsOfTheLordWindow:IsShown(), true)
+    eq(#sent, before + 1, "preached")
+    eq(WordsOfTheLordWindow:IsShown(), false)
+end)
+
+test("icon: the toc and the minimap button use the holy-bolt icon", function()
+    local toc = io.open(DIR .. ADDON .. ".toc"):read("*a")
+    assert(toc:find("## IconTexture: Interface\\Icons\\Spell_Holy_HolyBolt", 1, true), "toc icon")
+    local code = io.open(DIR .. "Button.lua"):read("*a")
+    assert(code:find("Interface\\\\Icons\\\\Spell_Holy_HolyBolt", 1, true), "minimap button icon")
+end)
+
+test("button: middle-click opens and closes the book without preaching", function()
+    local btn
+    for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end
     ns.CloseWindow()
+    local before = #sent
+    click(btn, "MiddleButton")
+    eq(WordsOfTheLordWindow:IsShown(), true)
+    click(btn, "MiddleButton")
+    eq(WordsOfTheLordWindow:IsShown(), false)
+    eq(#sent, before, "nothing preached")
+    eq(WordsOfTheLordDB.channel, "SAY", "channel untouched")
+    assert(ns.strings.en.TOOLTIP_MIDDLE and ns.strings.fr.TOOLTIP_MIDDLE, "tooltip text in both languages")
 end)
 
 test("book: opening a French client's window works end to end", function()

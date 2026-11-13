@@ -96,7 +96,7 @@ local strings = {
         MINE_REMOVE = "Retirer",
         LANG_NAMES = { en = "English", fr = "Français", qc = "Québec" },
         TOOLTIP_OPEN = "Clic : ouvrir le livre",
-        TOOLTIP_SHIFT = "Maj + clic gauche : ouvrir le livre",
+        TOOLTIP_MIDDLE = "Clic du milieu : ouvrir le livre",
         HELP = {
             "|cffffff00/parole|r : prêcher sur le canal par défaut",
             "|cffffff00/parole livre|r : ouvrir le livre (bibliothèque, favoris, réglages)",
@@ -211,7 +211,7 @@ local strings = {
         MINE_REMOVE = "Remove",
         LANG_NAMES = { en = "English", fr = "Français", qc = "Québec" },
         TOOLTIP_OPEN = "Click: open the book",
-        TOOLTIP_SHIFT = "Shift-click: open the book",
+        TOOLTIP_MIDDLE = "Middle-click: open the book",
         HELP = {
             "|cffffff00/parole|r: preach on the default channel",
             "|cffffff00/parole book|r: open the book (library, favorites, settings)",
