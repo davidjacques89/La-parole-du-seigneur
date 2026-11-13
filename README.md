@@ -13,6 +13,7 @@ A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 - Say, yell, emote, group (party/raid/instance picked automatically), raid, guild, or only yourself
 - Optional auto-preach every N minutes (2 minutes minimum, paused in combat)
 - Optional reactions: a saying to your group when you die and when you come back
+- Chat shows only the saying itself: no quotation marks, reference or category
 - The same saying never comes up twice in a row
 - Long sayings are split cleanly under WoW's 255-byte chat limit
 
