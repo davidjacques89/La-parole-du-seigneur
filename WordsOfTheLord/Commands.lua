@@ -1,4 +1,4 @@
--- Slash commands: /parole and /lps. Every subcommand has a French and an English name.
+-- Slash commands: /parole and /wotl. Every subcommand has a French and an English name.
 local _, ns = ...
 local L = ns.L
 
@@ -290,6 +290,6 @@ function ns.HandleSlash(input)
     commands.help()
 end
 
-SLASH_LAPAROLEDUSEIGNEUR1 = "/parole"
-SLASH_LAPAROLEDUSEIGNEUR2 = "/lps"
-SlashCmdList.LAPAROLEDUSEIGNEUR = ns.HandleSlash
+SLASH_WORDSOFTHELORD1 = "/parole"
+SLASH_WORDSOFTHELORD2 = "/wotl"
+SlashCmdList.WORDSOFTHELORD = ns.HandleSlash

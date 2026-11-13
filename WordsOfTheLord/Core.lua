@@ -501,14 +501,20 @@ frame:RegisterEvent("PLAYER_UNGHOST")
 
 frame:SetScript("OnEvent", function(_, event, arg1)
     if event == "ADDON_LOADED" and arg1 == addonName then
-        local saved = LaParoleDuSeigneurDB
+        local saved = WordsOfTheLordDB
+        -- Settings saved under the addon's former name ("La parole du seigneur") are moved
+        -- over once, then the old variable is cleared so it is never read again.
+        if saved == nil and LaParoleDuSeigneurDB ~= nil then
+            saved = LaParoleDuSeigneurDB
+        end
+        LaParoleDuSeigneurDB = nil
         local isUpgrade = saved ~= nil and (saved.schema or 1) < 2
         if saved then
             -- Run the migration on the raw saved data first, so "auto" is seen before defaults fill in.
             migrate(saved)
         end
-        LaParoleDuSeigneurDB = copyDefaults(defaults, saved or {})
-        ns.db = LaParoleDuSeigneurDB
+        WordsOfTheLordDB = copyDefaults(defaults, saved or {})
+        ns.db = WordsOfTheLordDB
         ns.upgradedFromV1 = isUpgrade
         frame:UnregisterEvent("ADDON_LOADED")
 
@@ -539,7 +545,7 @@ end)
 -- Addon compartment (the addon list button by the minimap)
 ---------------------------------------------------------------------------
 
-function LaParoleDuSeigneur_OnAddonCompartmentClick(_, button)
+function WordsOfTheLord_OnAddonCompartmentClick(_, button)
     if button == "RightButton" then
         ns.CycleChannel()
     else
@@ -547,10 +553,10 @@ function LaParoleDuSeigneur_OnAddonCompartmentClick(_, button)
     end
 end
 
-function LaParoleDuSeigneur_OnAddonCompartmentEnter(_, menuButton)
+function WordsOfTheLord_OnAddonCompartmentEnter(_, menuButton)
     ns.ShowTooltip(menuButton)
 end
 
-function LaParoleDuSeigneur_OnAddonCompartmentLeave()
+function WordsOfTheLord_OnAddonCompartmentLeave()
     GameTooltip:Hide()
 end

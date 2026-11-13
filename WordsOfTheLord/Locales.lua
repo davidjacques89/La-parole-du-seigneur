@@ -3,7 +3,7 @@ local _, ns = ...
 
 local strings = {
     fr = {
-        PREFIX = "|cffffd100La parole du seigneur|r",
+        PREFIX = "|cffffd100Words of the Lord|r",
         LOADED = "chargé (v%s). Tapez |cffffff00/parole aide|r pour les commandes.",
         NO_SAYINGS = "Aucune parole à prêcher. Ajoutez-en avec /parole ajouter <texte>.",
         NOT_IN_GUILD = "Vous n'êtes pas dans une guilde, la parole reste avec vous :",
@@ -49,7 +49,7 @@ local strings = {
         QC_SHARE_SET = "Mode Québec : %d %% de paroles du Québec, %d %% de versets et de vos paroles.",
         QC_SHARE_INFO = "Mode Québec : %d %% de paroles du Québec. Changez-le avec /parole quebec <0-100>.",
         QC_SHARE_BAD = "Choisissez un nombre de 0 à 100.",
-        TOOLTIP_TITLE = "La parole du seigneur",
+        TOOLTIP_TITLE = "Words of the Lord",
         TOOLTIP_LEFT = "Clic gauche : prêcher sur « %s »",
         TOOLTIP_RIGHT = "Clic droit : changer de canal",
         TOOLTIP_DRAG = "Glisser : déplacer le bouton",
@@ -74,7 +74,7 @@ local strings = {
         },
     },
     en = {
-        PREFIX = "|cffffd100La parole du seigneur|r",
+        PREFIX = "|cffffd100Words of the Lord|r",
         LOADED = "loaded (v%s). Type |cffffff00/parole help|r for commands.",
         NO_SAYINGS = "No sayings to preach. Add some with /parole add <text>.",
         NOT_IN_GUILD = "You are not in a guild, so the word stays with you:",
@@ -120,7 +120,7 @@ local strings = {
         QC_SHARE_SET = "Québec mode: %d%% Québec sayings, %d%% verses and your own.",
         QC_SHARE_INFO = "Québec mode: %d%% Québec sayings. Change it with /parole quebec <0-100>.",
         QC_SHARE_BAD = "Choose a number from 0 to 100.",
-        TOOLTIP_TITLE = "La parole du seigneur",
+        TOOLTIP_TITLE = "Words of the Lord",
         TOOLTIP_LEFT = "Left-click: preach on \"%s\"",
         TOOLTIP_RIGHT = "Right-click: change channel",
         TOOLTIP_DRAG = "Drag: move the button",

@@ -1,6 +1,6 @@
 -- Offline test harness: stubs the parts of the WoW API the addon uses, loads the addon
 -- files in TOC order, and exercises commands. Run from the repo root:  lua5.1 tests/run.lua
-local ADDON = "LaParoleDuSeigneur"
+local ADDON = "WordsOfTheLord"
 local DIR = ADDON .. "/"
 
 ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ local function fire(event, ...)
         if f.events[event] and f.scripts.OnEvent then f.scripts.OnEvent(f, event, ...) end
     end
 end
-local slash = SlashCmdList.LAPAROLEDUSEIGNEUR
+local slash = SlashCmdList.WORDSOFTHELORD
 
 ---------------------------------------------------------------------------
 -- Tiny test runner
@@ -113,11 +113,11 @@ local freshPrinted = printed
 ---------------------------------------------------------------------------
 test("fresh install: globals, slash commands, English default even on a French client", function()
     eq(type(slash), "function")
-    eq(SLASH_LAPAROLEDUSEIGNEUR1, "/parole")
-    eq(type(LaParoleDuSeigneurDB), "table")
-    eq(LaParoleDuSeigneurDB.lang, "en")
-    eq(LaParoleDuSeigneurDB.channel, "SAY")
-    eq(LaParoleDuSeigneurDB.favoriteWeight, 3)
+    eq(SLASH_WORDSOFTHELORD1, "/parole")
+    eq(type(WordsOfTheLordDB), "table")
+    eq(WordsOfTheLordDB.lang, "en")
+    eq(WordsOfTheLordDB.channel, "SAY")
+    eq(WordsOfTheLordDB.favoriteWeight, 3)
     eq(ns.GetLang(), "en")
     eq(ns.UILang(), "en")
 end)
@@ -165,7 +165,7 @@ test("library: 78 verses plus 40+ Québec sayings, ids unique and well formed", 
 end)
 
 test("English mode: English text only, no Québec sayings", function()
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
     local lib = ns.GetLibrary()
     for _, s in ipairs(lib) do assert(s.cat ~= "quebec", s.id) end
     local jn = ns.FindSayingById("jn3_16")
@@ -206,7 +206,7 @@ test("Québec mode: full French library plus the Québec sayings", function()
 end)
 
 test("Québec sayings are preachable in Québec mode and absent from the other modes", function()
-    LaParoleDuSeigneurDB.lang = "qc"
+    WordsOfTheLordDB.lang = "qc"
     ns.ResetBag()
     local sawQuebec = false
     for _ = 1, 400 do
@@ -215,11 +215,11 @@ test("Québec sayings are preachable in Québec mode and absent from the other m
     end
     assert(sawQuebec, "no Québec saying picked in 400 tries")
     for _, mode in ipairs({ "en", "fr" }) do
-        LaParoleDuSeigneurDB.lang = mode
+        WordsOfTheLordDB.lang = mode
         ns.ResetBag()
         for _ = 1, 300 do assert(ns.NextSaying().cat ~= "quebec") end
     end
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("French and Québec output uses guillemets", function()
@@ -245,14 +245,14 @@ end)
 ---------------------------------------------------------------------------
 test("upgrade from 0.1.0: auto language becomes English, own data kept, notice shown once", function()
     local kept = { "Pour la Horde", "Que la Lumière nous guide" }
-    LaParoleDuSeigneurDB = {
+    WordsOfTheLordDB = {
         channel = "GUILD", lang = "auto", useBuiltin = false, custom = { kept[1], kept[2] },
         autoEnabled = true, autoMinutes = 15, autoChannel = "GROUP", reactions = true,
         button = { shown = false, locked = true, point = "TOP", relPoint = "TOP", x = 5, y = 6 },
     }
     ns.eventFrame:RegisterEvent("ADDON_LOADED")
     fire("ADDON_LOADED", ADDON)
-    local db = LaParoleDuSeigneurDB
+    local db = WordsOfTheLordDB
     eq(ns.db, db)
     eq(db.lang, "en", "auto -> en")
     eq(db.schema, 2)
@@ -272,26 +272,54 @@ test("upgrade from 0.1.0: auto language becomes English, own data kept, notice s
 end)
 
 test("upgrade from 0.1.0: an explicit French choice is kept", function()
-    LaParoleDuSeigneurDB = { lang = "fr", custom = {} }
+    WordsOfTheLordDB = { lang = "fr", custom = {} }
     ns.eventFrame:RegisterEvent("ADDON_LOADED")
     fire("ADDON_LOADED", ADDON)
-    eq(LaParoleDuSeigneurDB.lang, "fr")
-    eq(LaParoleDuSeigneurDB.schema, 2)
+    eq(WordsOfTheLordDB.lang, "fr")
+    eq(WordsOfTheLordDB.schema, 2)
+end)
+
+test("settings saved under the former name are moved to the new variable once", function()
+    WordsOfTheLordDB = nil
+    LaParoleDuSeigneurDB = {
+        schema = 2, lang = "qc", quebecShare = 55, channel = "GUILD", custom = { "Ma parole" },
+        favorites = { jn3_16 = true }, excluded = { jn14_6 = true },
+    }
+    ns.eventFrame:RegisterEvent("ADDON_LOADED")
+    fire("ADDON_LOADED", ADDON)
+    local db = WordsOfTheLordDB
+    eq(ns.db, db)
+    eq(db.lang, "qc"); eq(db.quebecShare, 55); eq(db.channel, "GUILD")
+    eq(db.custom[1], "Ma parole"); eq(db.favorites.jn3_16, true); eq(db.excluded.jn14_6, true)
+    eq(LaParoleDuSeigneurDB, nil, "old variable must be cleared")
+    -- A second load must keep using the new variable.
+    ns.eventFrame:RegisterEvent("ADDON_LOADED")
+    fire("ADDON_LOADED", ADDON)
+    eq(WordsOfTheLordDB.lang, "qc")
+end)
+
+test("new variable wins when both exist", function()
+    WordsOfTheLordDB = { schema = 2, lang = "fr", custom = {} }
+    LaParoleDuSeigneurDB = { schema = 2, lang = "qc", custom = {} }
+    ns.eventFrame:RegisterEvent("ADDON_LOADED")
+    fire("ADDON_LOADED", ADDON)
+    eq(WordsOfTheLordDB.lang, "fr")
+    eq(LaParoleDuSeigneurDB, nil)
 end)
 
 test("garbage saved language falls back to English", function()
-    LaParoleDuSeigneurDB = { lang = "klingon", schema = 2 }
+    WordsOfTheLordDB = { lang = "klingon", schema = 2 }
     ns.eventFrame:RegisterEvent("ADDON_LOADED")
     fire("ADDON_LOADED", ADDON)
-    eq(LaParoleDuSeigneurDB.lang, "en")
+    eq(WordsOfTheLordDB.lang, "en")
 end)
 
 -- Back to a clean database for the rest of the run.
-LaParoleDuSeigneurDB = nil
+WordsOfTheLordDB = nil
 ns.eventFrame:RegisterEvent("ADDON_LOADED")
 fire("ADDON_LOADED", ADDON)
 ns.ResetBag()
-LaParoleDuSeigneurDB.lang = "en"
+WordsOfTheLordDB.lang = "en"
 
 ---------------------------------------------------------------------------
 -- Picking: favorites, exclusions, categories, repeats
@@ -312,7 +340,7 @@ end)
 
 test("tiny pools still work (1 saying and 2 sayings)", function()
     slash("integrees")  -- built-ins off
-    eq(LaParoleDuSeigneurDB.useBuiltin, false)
+    eq(WordsOfTheLordDB.useBuiltin, false)
     slash("add Une seule")
     ns.ResetBag()
     for _ = 1, 5 do eq(ns.NextSaying().text, "Une seule") end
@@ -322,7 +350,7 @@ test("tiny pools still work (1 saying and 2 sayings)", function()
     assert(a ~= b, "two-saying pool repeated")
     slash("remove 2") slash("remove 1")
     slash("integrees")
-    eq(LaParoleDuSeigneurDB.useBuiltin, true)
+    eq(WordsOfTheLordDB.useBuiltin, true)
 end)
 
 test("favorite by reference: toggles, English and French spellings, accents ignored", function()
@@ -371,12 +399,12 @@ end)
 test("favorites come up more often: weight 5 gives roughly 3x or more, weight 1 is neutral", function()
     math.randomseed(12345)
     local favs = { "jn3_16", "ps23_1", "jn14_6" }
-    for _, id in ipairs(favs) do LaParoleDuSeigneurDB.favorites[id] = true end
+    for _, id in ipairs(favs) do WordsOfTheLordDB.favorites[id] = true end
     local isFav = {}
     for _, id in ipairs(favs) do isFav[id] = true end
 
     local function ratio(weight)
-        LaParoleDuSeigneurDB.favoriteWeight = weight
+        WordsOfTheLordDB.favoriteWeight = weight
         ns.ResetBag()
         local favCount, otherCount, picks = 0, 0, 30000
         for _ = 1, picks do
@@ -392,16 +420,16 @@ test("favorites come up more often: weight 5 gives roughly 3x or more, weight 1 
     assert(r3 > 1.8, "weight 3 ratio too low: " .. r3)
     assert(r5 > r3 and r3 > r1, ("ratios should rise with weight: %.2f %.2f %.2f"):format(r1, r3, r5))
     assert(r1 > 0.7 and r1 < 1.4, "weight 1 should be neutral: " .. r1)
-    LaParoleDuSeigneurDB.favorites = {}
-    LaParoleDuSeigneurDB.favoriteWeight = 3
+    WordsOfTheLordDB.favorites = {}
+    WordsOfTheLordDB.favoriteWeight = 3
 end)
 
 test("weight command: valid range only", function()
-    slash("weight 5") eq(LaParoleDuSeigneurDB.favoriteWeight, 5)
-    slash("poids 2") eq(LaParoleDuSeigneurDB.favoriteWeight, 2)
-    slash("weight 9") assert(printedContains("1 to 5")) eq(LaParoleDuSeigneurDB.favoriteWeight, 2)
-    slash("weight 0") eq(LaParoleDuSeigneurDB.favoriteWeight, 2)
-    slash("weight abc") eq(LaParoleDuSeigneurDB.favoriteWeight, 2)
+    slash("weight 5") eq(WordsOfTheLordDB.favoriteWeight, 5)
+    slash("poids 2") eq(WordsOfTheLordDB.favoriteWeight, 2)
+    slash("weight 9") assert(printedContains("1 to 5")) eq(WordsOfTheLordDB.favoriteWeight, 2)
+    slash("weight 0") eq(WordsOfTheLordDB.favoriteWeight, 2)
+    slash("weight abc") eq(WordsOfTheLordDB.favoriteWeight, 2)
     slash("weight 3")
 end)
 
@@ -469,13 +497,13 @@ local function quebecFraction(picks)
 end
 
 test("Québec share defaults to 70% and Québec mode picks Québec sayings about 70% of the time", function()
-    eq(LaParoleDuSeigneurDB.quebecShare, 70)
+    eq(WordsOfTheLordDB.quebecShare, 70)
     eq(ns.QuebecShare(), 70)
     math.randomseed(2024)
-    LaParoleDuSeigneurDB.lang = "qc"
+    WordsOfTheLordDB.lang = "qc"
     local f = quebecFraction(20000)
     assert(f > 0.66 and f < 0.74, "expected about 0.70, got " .. f)
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("quebec command: set, show, validate; 100 = Québec only, 0 = verses only", function()
@@ -483,36 +511,36 @@ test("quebec command: set, show, validate; 100 = Québec only, 0 = verses only",
     slash("quebec")
     assert(printedContains("70 %"), "info should show 70 %")
     slash("quebec 100")
-    eq(LaParoleDuSeigneurDB.quebecShare, 100)
+    eq(WordsOfTheLordDB.quebecShare, 100)
     eq(quebecFraction(3000), 1)
     slash("quebec 0")
     eq(quebecFraction(3000), 0)
     slash("québec 45")
-    eq(LaParoleDuSeigneurDB.quebecShare, 45)
+    eq(WordsOfTheLordDB.quebecShare, 45)
     assert(printedContains("45 %") and printedContains("55 %"))
     local f = quebecFraction(20000)
     assert(f > 0.41 and f < 0.49, "expected about 0.45, got " .. f)
-    slash("quebec 101")  assert(printedContains("0 à 100")) eq(LaParoleDuSeigneurDB.quebecShare, 45)
-    slash("quebec -5")   eq(LaParoleDuSeigneurDB.quebecShare, 45)
-    slash("quebec abc")  eq(LaParoleDuSeigneurDB.quebecShare, 45)
-    slash("qc 80")       eq(LaParoleDuSeigneurDB.quebecShare, 80)
+    slash("quebec 101")  assert(printedContains("0 à 100")) eq(WordsOfTheLordDB.quebecShare, 45)
+    slash("quebec -5")   eq(WordsOfTheLordDB.quebecShare, 45)
+    slash("quebec abc")  eq(WordsOfTheLordDB.quebecShare, 45)
+    slash("qc 80")       eq(WordsOfTheLordDB.quebecShare, 80)
     slash("lang en")
     slash("quebec 70")
     assert(printedContains("Québec mode: 70% Québec sayings, 30% verses"))
 end)
 
 test("the Québec share has no effect in English or French mode (no Québec sayings there)", function()
-    LaParoleDuSeigneurDB.quebecShare = 100
+    WordsOfTheLordDB.quebecShare = 100
     for _, mode in ipairs({ "en", "fr" }) do
-        LaParoleDuSeigneurDB.lang = mode
+        WordsOfTheLordDB.lang = mode
         eq(quebecFraction(2000), 0, mode)
     end
-    LaParoleDuSeigneurDB.quebecShare = 70
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.quebecShare = 70
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("Québec mode with the Québec category off falls back to verses; verses off falls back to Québec", function()
-    LaParoleDuSeigneurDB.lang = "qc"
+    WordsOfTheLordDB.lang = "qc"
     ns.SetCategory("quebec", false)
     eq(quebecFraction(2000), 0)
     ns.SetCategory("quebec", true)
@@ -521,11 +549,11 @@ test("Québec mode with the Québec category off falls back to verses; verses of
     end
     eq(quebecFraction(2000), 1, "only Québec sayings left")
     for _, c in ipairs(ns.CATEGORIES) do ns.SetCategory(c.key, true) end
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("Québec mode: the player's own sayings share the 30% side with the verses", function()
-    LaParoleDuSeigneurDB.lang = "qc"
+    WordsOfTheLordDB.lang = "qc"
     slash("add Ma parole perso")
     ns.ResetBag()
     local custom, picks = 0, 20000
@@ -542,16 +570,16 @@ test("Québec mode: the player's own sayings share the 30% side with the verses"
     assert(found, "own saying must still come up when Québec share is 0")
     slash("quebec 70")
     slash("remove 1")
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("Québec mode: favorites still weigh more inside the Québec group, and exclusions apply", function()
     math.randomseed(777)
-    LaParoleDuSeigneurDB.lang = "qc"
-    LaParoleDuSeigneurDB.quebecShare = 100
-    LaParoleDuSeigneurDB.favorites = { qc_notre_pere = true }
-    LaParoleDuSeigneurDB.excluded = { qc_angelus1 = true }
-    LaParoleDuSeigneurDB.favoriteWeight = 5
+    WordsOfTheLordDB.lang = "qc"
+    WordsOfTheLordDB.quebecShare = 100
+    WordsOfTheLordDB.favorites = { qc_notre_pere = true }
+    WordsOfTheLordDB.excluded = { qc_angelus1 = true }
+    WordsOfTheLordDB.favoriteWeight = 5
     ns.ResetBag()
     local counts, picks = {}, 30000
     for _ = 1, picks do
@@ -565,13 +593,13 @@ test("Québec mode: favorites still weigh more inside the Québec group, and exc
     end
     local ratio = counts.qc_notre_pere / (others / n)
     assert(ratio > 2.5, "favorite ratio too low: " .. ratio)
-    LaParoleDuSeigneurDB.favorites, LaParoleDuSeigneurDB.excluded = {}, {}
-    LaParoleDuSeigneurDB.favoriteWeight, LaParoleDuSeigneurDB.quebecShare = 3, 70
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.favorites, WordsOfTheLordDB.excluded = {}, {}
+    WordsOfTheLordDB.favoriteWeight, WordsOfTheLordDB.quebecShare = 3, 70
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("Québec mode: no immediate repeats across both groups", function()
-    LaParoleDuSeigneurDB.lang = "qc"
+    WordsOfTheLordDB.lang = "qc"
     ns.ResetBag()
     local last
     for _ = 1, 5000 do
@@ -579,17 +607,17 @@ test("Québec mode: no immediate repeats across both groups", function()
         assert(s.id ~= last, "immediate repeat of " .. s.id)
         last = s.id
     end
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("existing 0.2.0 saved settings (no quebecShare) get the 70% default", function()
-    LaParoleDuSeigneurDB = { lang = "qc", schema = 2, custom = {}, favorites = { jn3_16 = true } }
+    WordsOfTheLordDB = { lang = "qc", schema = 2, custom = {}, favorites = { jn3_16 = true } }
     ns.eventFrame:RegisterEvent("ADDON_LOADED")
     fire("ADDON_LOADED", ADDON)
-    eq(LaParoleDuSeigneurDB.quebecShare, 70)
-    eq(LaParoleDuSeigneurDB.lang, "qc")
-    eq(LaParoleDuSeigneurDB.favorites.jn3_16, true)
-    LaParoleDuSeigneurDB = nil
+    eq(WordsOfTheLordDB.quebecShare, 70)
+    eq(WordsOfTheLordDB.lang, "qc")
+    eq(WordsOfTheLordDB.favorites.jn3_16, true)
+    WordsOfTheLordDB = nil
     ns.eventFrame:RegisterEvent("ADDON_LOADED")
     fire("ADDON_LOADED", ADDON)
     ns.ResetBag()
@@ -598,18 +626,18 @@ end)
 test("reset puts the Québec share back to 70", function()
     slash("quebec 20")
     slash("reset")
-    eq(LaParoleDuSeigneurDB.quebecShare, 70)
+    eq(WordsOfTheLordDB.quebecShare, 70)
 end)
 
 test("the new prayers split into valid chat lines in the right order", function()
-    LaParoleDuSeigneurDB.lang = "qc"
+    WordsOfTheLordDB.lang = "qc"
     local np = ns.FindSayingById("qc_notre_pere")
     local chunks = ns.SplitMessage(ns.FormatSaying(np))
     assert(#chunks >= 2, "Notre Père should need two chat lines")
     local joined = table.concat(chunks, " ")
     assert(joined:find("^« Notre Père, qui êtes aux cieux"), joined:sub(1, 40))
     assert(joined:find("Ainsi soit%-il%. » — Notre Père %(ancienne version%)$"), joined:sub(-60))
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 ---------------------------------------------------------------------------
@@ -618,7 +646,7 @@ end)
 test("/parole guilde sends once to guild, default unchanged", function()
     slash("guilde")
     eq(sent[1].chatType, "GUILD")
-    eq(LaParoleDuSeigneurDB.channel, "SAY")
+    eq(WordsOfTheLordDB.channel, "SAY")
 end)
 
 test("group resolves to party / raid / instance", function()
@@ -646,7 +674,7 @@ end)
 
 test("/parole canal crier changes default", function()
     slash("canal crier")
-    eq(LaParoleDuSeigneurDB.channel, "YELL")
+    eq(WordsOfTheLordDB.channel, "YELL")
     slash("")
     eq(sent[#sent].chatType, "YELL")
     slash("channel say")
@@ -654,12 +682,12 @@ end)
 
 test("add / list / remove custom sayings, pipes sanitized", function()
     slash("add For the Horde | and the Lord")
-    eq(#LaParoleDuSeigneurDB.custom, 1)
-    eq(LaParoleDuSeigneurDB.custom[1], "For the Horde / and the Lord")
+    eq(#WordsOfTheLordDB.custom, 1)
+    eq(WordsOfTheLordDB.custom[1], "For the Horde / and the Lord")
     slash("list")
     assert(printedContains("1. For the Horde"))
     slash("remove 1")
-    eq(#LaParoleDuSeigneurDB.custom, 0)
+    eq(#WordsOfTheLordDB.custom, 0)
     slash("remove 9")
     assert(printedContains("Invalid number"))
 end)
@@ -695,14 +723,14 @@ end)
 
 test("every saying in every language fits in chat after formatting (split if needed)", function()
     for _, mode in ipairs({ "en", "fr", "qc" }) do
-        LaParoleDuSeigneurDB.lang = mode
+        WordsOfTheLordDB.lang = mode
         for _, shown in ipairs(ns.GetLibrary()) do
             for _, chunk in ipairs(ns.SplitMessage(ns.FormatSaying(shown))) do
                 assert(#chunk <= 255 and not chunk:find("|", 1, true), shown.id)
             end
         end
     end
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
 end)
 
 test("auto-preach: ticker, minimum, channel, combat skip, off", function()
@@ -710,7 +738,7 @@ test("auto-preach: ticker, minimum, channel, combat skip, off", function()
     assert(printedContains("Minimum interval"))
     local t = tickers[#tickers]
     eq(t.seconds, 120)
-    eq(LaParoleDuSeigneurDB.autoChannel, "GROUP")
+    eq(WordsOfTheLordDB.autoChannel, "GROUP")
     state.inGroup = true
     t.fn()
     eq(sent[#sent].chatType, "PARTY")
@@ -721,7 +749,7 @@ test("auto-preach: ticker, minimum, channel, combat skip, off", function()
     state.combat, state.inGroup = false, false
     slash("auto off")
     eq(t.cancelled, true)
-    eq(LaParoleDuSeigneurDB.autoEnabled, false)
+    eq(WordsOfTheLordDB.autoEnabled, false)
 end)
 
 test("auto-preach on /say outdoors only prints (needs a click)", function()
@@ -739,11 +767,11 @@ end)
 
 test("reactions: death and revive in group, in each language", function()
     slash("reactions")
-    eq(LaParoleDuSeigneurDB.reactions, true)
+    eq(WordsOfTheLordDB.reactions, true)
     state.inGroup = true
     for mode, want in pairs({ en = { "Father, forgive", "John 11:25" }, fr = { "Père, pardonne", "Jean 11:25" },
                               qc = { "Père, pardonne", "Jean 11:25" } }) do
-        LaParoleDuSeigneurDB.lang = mode
+        WordsOfTheLordDB.lang = mode
         state.dead = true
         fire("PLAYER_DEAD")
         assert(sent[#sent].msg:find(want[1], 1, true), mode .. " death: " .. sent[#sent].msg)
@@ -755,7 +783,7 @@ test("reactions: death and revive in group, in each language", function()
         fire("PLAYER_ALIVE")  -- must not fire twice
         eq(#sent, before + 1)
     end
-    LaParoleDuSeigneurDB.lang = "en"
+    WordsOfTheLordDB.lang = "en"
     state.inGroup = false
     slash("reactions")
 end)
@@ -782,7 +810,7 @@ test("button: right-click cycles channel, left-click preaches, toggle", function
     for _, f in ipairs(frames) do if f.scripts.OnClick then btn = f end end
     assert(btn, "button not created")
     btn.scripts.OnClick(btn, "RightButton")
-    eq(LaParoleDuSeigneurDB.channel, "YELL")
+    eq(WordsOfTheLordDB.channel, "YELL")
     btn.scripts.OnClick(btn, "LeftButton")
     eq(sent[#sent].chatType, "YELL")
     slash("button")
@@ -793,7 +821,7 @@ test("button: right-click cycles channel, left-click preaches, toggle", function
 end)
 
 test("addon compartment click works", function()
-    LaParoleDuSeigneur_OnAddonCompartmentClick(ADDON, "LeftButton")
+    WordsOfTheLord_OnAddonCompartmentClick(ADDON, "LeftButton")
     eq(#sent, 1)
 end)
 
@@ -815,12 +843,12 @@ test("reset keeps custom sayings, favorites and exclusions but resets settings",
     slash("weight 5")
     slash("lang qc")
     slash("reset")
-    eq(LaParoleDuSeigneurDB.channel, "SAY")
-    eq(LaParoleDuSeigneurDB.favoriteWeight, 3)
-    eq(LaParoleDuSeigneurDB.lang, "en", "reset goes back to English")
-    eq(#LaParoleDuSeigneurDB.custom, 1)
-    eq(LaParoleDuSeigneurDB.favorites.jn3_16, true)
-    eq(LaParoleDuSeigneurDB.excluded.jn14_6, true)
+    eq(WordsOfTheLordDB.channel, "SAY")
+    eq(WordsOfTheLordDB.favoriteWeight, 3)
+    eq(WordsOfTheLordDB.lang, "en", "reset goes back to English")
+    eq(#WordsOfTheLordDB.custom, 1)
+    eq(WordsOfTheLordDB.favorites.jn3_16, true)
+    eq(WordsOfTheLordDB.excluded.jn14_6, true)
     slash("remove 1")
     slash("fav John 3:16")
     slash("exclude John 14:6")

@@ -1,10 +1,10 @@
-"""Assemble LaParoleDuSeigneur/Sayings.lua from the generated Bible entries plus the Québec list."""
+"""Assemble WordsOfTheLord/Sayings.lua from the generated Bible entries plus the Québec list."""
 import os
 import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "..", "LaParoleDuSeigneur", "Sayings.lua")
+OUT = os.path.join(HERE, "..", "WordsOfTheLord", "Sayings.lua")
 
 # (id, text, label). Traditional expressions, prayers and invocations used in Quebec Catholic culture.
 # No author is claimed: the label says what kind of saying it is.

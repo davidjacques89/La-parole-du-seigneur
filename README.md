@@ -1,4 +1,4 @@
-# La parole du seigneur
+# Words of the Lord
 
 A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 *Un addon pour World of Warcraft: Forever qui prêche les paroles du Seigneur dans le chat.*
@@ -16,13 +16,13 @@ A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 
 ## Install
 
-Copy the `LaParoleDuSeigneur` folder (the one with the `.toc` inside) into:
+Copy the `WordsOfTheLord` folder (the one with the `.toc` inside) into:
 
 ```
 World of Warcraft\_forever_\Interface\AddOns\
 ```
 
-You should end up with `...\AddOns\LaParoleDuSeigneur\LaParoleDuSeigneur.toc`. Then `/reload` or restart the game.
+You should end up with `...\AddOns\WordsOfTheLord\WordsOfTheLord.toc`. Then `/reload` or restart the game.
 
 ### While developing
 
@@ -30,12 +30,12 @@ Link the folder instead of copying it, so every save is live after `/reload`:
 
 ```bat
 :: Windows (Command Prompt as administrator)
-mklink /J "C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\LaParoleDuSeigneur" "C:\path\to\La-parole-du-seigneur\LaParoleDuSeigneur"
+mklink /J "C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\WordsOfTheLord" "C:\path\to\Words-of-the-Lord\WordsOfTheLord"
 ```
 
 ```sh
 # macOS
-ln -s ~/path/to/La-parole-du-seigneur/LaParoleDuSeigneur "/Applications/World of Warcraft/_forever_/Interface/AddOns/LaParoleDuSeigneur"
+ln -s ~/path/to/Words-of-the-Lord/WordsOfTheLord "/Applications/World of Warcraft/_forever_/Interface/AddOns/WordsOfTheLord"
 ```
 
 Turn on Lua error display in game with `/console scriptErrors 1`.
@@ -63,7 +63,7 @@ of the French-speaking Catholic world; they are the ones Quebec Catholic culture
 
 ## Commands
 
-`/parole` or `/lps`. Each command works in French or English.
+`/parole` or `/wotl`. Each command works in French or English.
 
 | Command | What it does |
 |---|---|
@@ -98,13 +98,13 @@ An in-game settings screen and library browser are planned for the next version.
 
 - **Say, yell and emote need a click.** Outside instances, Blizzard only lets addons talk in /say, /yell and /emote right after a click or a typed command. The button and slash commands work everywhere. Auto-preach and reactions on those channels just show the saying to you, so use guild or group for automatic messages.
 - **Don't spam.** Repeated automated messages can get you reported or silenced. Keep the auto-preach interval reasonable.
-- Settings are saved per account in `WTF\Account\<ACCOUNT>\SavedVariables\LaParoleDuSeigneur.lua`.
+- Settings are saved per account in `WTF\Account\<ACCOUNT>\SavedVariables\WordsOfTheLord.lua`.
 
 ## Project layout
 
 ```
-LaParoleDuSeigneur/
-  LaParoleDuSeigneur.toc   addon metadata (Interface 16001 = WoW Forever 1.60.1)
+WordsOfTheLord/
+  WordsOfTheLord.toc   addon metadata (Interface 16001 = WoW Forever 1.60.1)
   Locales.lua              interface text, French and English; language modes
   Sayings.lua              the sayings library (generated, see tools/)
   Core.lua                 settings, migration, picking (favorites, weights), sending, auto-preach, reactions

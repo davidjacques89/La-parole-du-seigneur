@@ -1,6 +1,6 @@
 # Library tools
 
-`LaParoleDuSeigneur/Sayings.lua` is generated, so every Bible verse is cut from a
+`WordsOfTheLord/Sayings.lua` is generated, so every Bible verse is cut from a
 public-domain text instead of typed by hand.
 
 - `build_sayings.py` lists the verses (`SPEC`) and how each is trimmed. The build fails if a
