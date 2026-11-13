@@ -1,4 +1,4 @@
--- The minimap button: left-click preaches, Shift-click opens the book, right-click changes the
+-- The minimap button: left-click preaches, middle-click (or Shift-click) opens the book, right-click changes the
 -- default channel, and dragging slides it around the edge of the minimap.
 -- A click counts as a "hardware event", which is what lets /say and /yell go out in the open world.
 local addonName, ns = ...
@@ -14,7 +14,7 @@ function ns.ShowTooltip(owner, fromCompartment)
         GameTooltip:AddLine(L.TOOLTIP_OPEN, 1, 1, 1)
     else
         GameTooltip:AddLine(L.TOOLTIP_LEFT:format(ns.ChannelLabel(ns.db.channel)), 1, 1, 1)
-        GameTooltip:AddLine(L.TOOLTIP_SHIFT, 1, 1, 1)
+        GameTooltip:AddLine(L.TOOLTIP_MIDDLE, 1, 1, 1)
     end
     GameTooltip:AddLine(L.TOOLTIP_RIGHT, 1, 1, 1)
     if owner == button and not ns.db.button.locked then
@@ -85,7 +85,7 @@ function ns.CreateButton()
     button:SetSize(31, 31)
     button:SetFrameStrata("MEDIUM")
     button:SetFrameLevel(8)
-    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    button:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     button:RegisterForDrag("LeftButton")
     button:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
@@ -106,6 +106,8 @@ function ns.CreateButton()
     button:SetScript("OnClick", function(_, mouseButton)
         if mouseButton == "RightButton" then
             ns.CycleChannel()
+        elseif mouseButton == "MiddleButton" then
+            ns.ToggleWindow()
         elseif IsShiftKeyDown and IsShiftKeyDown() then
             ns.ToggleWindow()
         else

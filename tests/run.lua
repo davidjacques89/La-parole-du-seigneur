@@ -1304,6 +1304,20 @@ test("button: shift-click opens the book instead of preaching", function()
     ns.CloseWindow()
 end)
 
+test("button: middle-click opens and closes the book without preaching", function()
+    local btn
+    for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end
+    ns.CloseWindow()
+    local before = #sent
+    click(btn, "MiddleButton")
+    eq(WordsOfTheLordWindow:IsShown(), true)
+    click(btn, "MiddleButton")
+    eq(WordsOfTheLordWindow:IsShown(), false)
+    eq(#sent, before, "nothing preached")
+    eq(WordsOfTheLordDB.channel, "SAY", "channel untouched")
+    assert(ns.strings.en.TOOLTIP_MIDDLE and ns.strings.fr.TOOLTIP_MIDDLE, "tooltip text in both languages")
+end)
+
 test("book: opening a French client's window works end to end", function()
     state.locale = "frFR"
     ns.OpenWindow("set")
