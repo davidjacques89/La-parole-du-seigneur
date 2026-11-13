@@ -86,6 +86,13 @@ end
 UIParent = newFrame()
 GameTooltip = newFrame()
 function GameTooltip:GetOwner() return nil end
+-- The minimap: 140 wide, centered at (500, 400); the cursor position is set by tests.
+Minimap = newFrame()
+function Minimap:GetWidth() return 140 end
+function Minimap:GetCenter() return 500, 400 end
+function Minimap:GetEffectiveScale() return 1 end
+state.cursor = { 500, 400 }
+function GetCursorPosition() return state.cursor[1], state.cursor[2] end
 SlashCmdList = {}
 
 ---------------------------------------------------------------------------
@@ -306,7 +313,9 @@ test("upgrade from 0.1.0: auto language becomes English, own data kept, notice s
     eq(db.useBuiltin, false)
     eq(#db.custom, 2); eq(db.custom[1], kept[1]); eq(db.custom[2], kept[2])
     eq(db.autoMinutes, 15); eq(db.autoChannel, "GROUP"); eq(db.reactions, true)
-    eq(db.button.shown, false); eq(db.button.locked, true); eq(db.button.x, 5)
+    eq(db.button.shown, false); eq(db.button.locked, true)
+    eq(db.button.x, nil, "old floating position dropped"); eq(db.button.point, nil)
+    eq(db.button.angle, 215, "minimap angle default")
     eq(type(db.favorites), "table"); eq(type(db.excluded), "table"); eq(type(db.categories), "table")
     eq(db.favoriteWeight, 3)
     printed = {}
@@ -872,6 +881,53 @@ test("button: right-click cycles channel, left-click preaches, toggle", function
     slash("button")
     eq(btn.shown, true)
     slash("channel say")
+end)
+
+test("minimap button: sits on the minimap, offsets follow the angle and the minimap shape", function()
+    local btn
+    for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end
+    eq(btn.parent, Minimap, "button lives on the minimap")
+    local function near(a, b) assert(math.abs(a - b) < 0.001, a .. " vs " .. b) end
+    local x, y = ns.MinimapOffset(0, 70)
+    near(x, 75) near(y, 0)
+    x, y = ns.MinimapOffset(90, 70)
+    near(x, 0) near(y, 75)
+    x, y = ns.MinimapOffset(180, 70)
+    near(x, -75) near(y, 0)
+    x, y = ns.MinimapOffset(45, 70, "SQUARE")
+    near(x, 75) near(y, 75)
+    local p = btn.points
+    eq(p[1], "CENTER") eq(p[2], Minimap) eq(p[3], "CENTER")
+    local dx, dy = ns.MinimapOffset(WordsOfTheLordDB.button.angle, 70)
+    near(p[4], dx) near(p[5], dy)
+end)
+
+test("minimap button: dragging slides it around the edge, lock stops it", function()
+    local btn
+    for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end
+    btn.scripts.OnDragStart(btn)
+    assert(btn.scripts.OnUpdate, "dragging should start an update loop")
+    state.cursor = { 500, 520 }   -- straight above the center
+    btn.scripts.OnUpdate(btn)
+    assert(math.abs(WordsOfTheLordDB.button.angle - 90) < 0.001, WordsOfTheLordDB.button.angle)
+    state.cursor = { 380, 400 }   -- to the left
+    btn.scripts.OnUpdate(btn)
+    assert(math.abs(WordsOfTheLordDB.button.angle - 180) < 0.001, WordsOfTheLordDB.button.angle)
+    state.cursor = { 500, 300 }   -- below: angles stay in 0-360
+    btn.scripts.OnUpdate(btn)
+    assert(math.abs(WordsOfTheLordDB.button.angle - 270) < 0.001, WordsOfTheLordDB.button.angle)
+    local p = btn.points
+    assert(math.abs(p[4]) < 0.001 and math.abs(p[5] + 75) < 0.001, "button moved to the bottom of the minimap")
+    btn.scripts.OnDragStop(btn)
+    eq(btn.scripts.OnUpdate, nil, "update loop stops with the drag")
+    -- locked: dragging does nothing
+    slash("lock")
+    btn.scripts.OnDragStart(btn)
+    eq(btn.scripts.OnUpdate, nil)
+    slash("lock")
+    -- the angle survives in the saved variables
+    eq(type(WordsOfTheLordDB.button.angle), "number")
+    state.cursor = { 500, 400 }
 end)
 
 test("addon compartment: left-click opens the book, right-click changes channel", function()

@@ -26,7 +26,7 @@ local defaults = {
     autoMinutes = 10,
     autoChannel = "GUILD",
     reactions = false,
-    button = { shown = true, locked = false, point = "CENTER", relPoint = "CENTER", x = 0, y = -180 },
+    button = { shown = true, locked = false, angle = 215 },   -- the minimap button; angle in degrees around the minimap
 }
 
 local function copyDefaults(src, dst)
@@ -65,6 +65,13 @@ local function migrate(db)
     end
     if db.lang ~= "en" and db.lang ~= "fr" and db.lang ~= "qc" then
         db.lang = "en"
+    end
+    -- The button used to float on the screen; it now lives on the minimap, so the old position is dropped.
+    if type(db.button) == "table" then
+        db.button.point, db.button.relPoint, db.button.x, db.button.y = nil, nil, nil, nil
+        if type(db.button.angle) ~= "number" then
+            db.button.angle = nil
+        end
     end
     return changed
 end
