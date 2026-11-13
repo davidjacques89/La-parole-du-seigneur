@@ -4,7 +4,7 @@
 local addonName, ns = ...
 local L = ns.L
 
-local ICON = "Interface\\AddOns\\" .. addonName .. "\\Media\\PrayingHands.tga"   -- two praying hands, drawn by tools/make_icon.py
+local ICON = "Interface\\Icons\\Spell_Holy_HolyBolt"
 local button
 
 function ns.ShowTooltip(owner, fromCompartment)
