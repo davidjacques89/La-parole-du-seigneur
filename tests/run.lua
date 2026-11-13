@@ -1303,6 +1303,24 @@ test("button: shift-click no longer opens the book (it preaches like a normal cl
     eq(WordsOfTheLordWindow:IsShown(), false)
 end)
 
+test("icon: the praying-hands texture ships with the addon and is used by the button and the addon list", function()
+    local path = DIR .. "Media/PrayingHands.tga"
+    local f = assert(io.open(path, "rb"), "icon file missing: " .. path)
+    local header = f:read(18)
+    local size = #f:read("*a")
+    f:close()
+    eq(header:byte(3), 2, "uncompressed true-color TGA")
+    eq(header:byte(13) + header:byte(14) * 256, 64, "width")
+    eq(header:byte(15) + header:byte(16) * 256, 64, "height")
+    eq(header:byte(17), 32, "32 bits per pixel, so it has transparency")
+    eq(size, 64 * 64 * 4, "pixel data size")
+    local toc = io.open(DIR .. ADDON .. ".toc"):read("*a")
+    assert(toc:find("## IconTexture: Interface\\AddOns\\WordsOfTheLord\\Media\\PrayingHands.tga", 1, true), "toc icon")
+    local code = io.open(DIR .. "Button.lua"):read("*a")
+    assert(code:find("Media\\\\PrayingHands.tga", 1, true), "minimap button uses the icon")
+    assert(not code:find("Spell_Holy_HolyBolt", 1, true), "old icon removed")
+end)
+
 test("button: middle-click opens and closes the book without preaching", function()
     local btn
     for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end

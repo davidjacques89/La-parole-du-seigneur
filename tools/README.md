@@ -42,3 +42,8 @@ Where they come from:
   Catholic culture and have not been matched against a printed collection.
 
 Review the list in `assemble.py` and cut or add freely. Keep every `id` permanent, because favorites are saved by id.
+
+## The icon
+
+`python3 tools/make_icon.py` redraws the praying-hands icon (needs Pillow) and writes
+`WordsOfTheLord/Media/PrayingHands.tga` (64x64, 32-bit, transparent). Add a second argument to also save a PNG preview.
