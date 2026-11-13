@@ -1,4 +1,4 @@
--- The minimap button: left-click preaches, middle-click (or Shift-click) opens the book, right-click changes the
+-- The minimap button: left-click preaches, middle-click opens the book, right-click changes the
 -- default channel, and dragging slides it around the edge of the minimap.
 -- A click counts as a "hardware event", which is what lets /say and /yell go out in the open world.
 local addonName, ns = ...
@@ -107,8 +107,6 @@ function ns.CreateButton()
         if mouseButton == "RightButton" then
             ns.CycleChannel()
         elseif mouseButton == "MiddleButton" then
-            ns.ToggleWindow()
-        elseif IsShiftKeyDown and IsShiftKeyDown() then
             ns.ToggleWindow()
         else
             ns.Preach()

@@ -1291,7 +1291,7 @@ test("book: a slash command updates an open book", function()
     slash("fav " .. ref)
 end)
 
-test("button: shift-click opens the book instead of preaching", function()
+test("button: shift-click no longer opens the book (it preaches like a normal click)", function()
     local btn
     for _, f in ipairs(frames) do if f.name == "WordsOfTheLordButton" then btn = f end end
     ns.CloseWindow()
@@ -1299,9 +1299,8 @@ test("button: shift-click opens the book instead of preaching", function()
     state.shift = true
     click(btn, "LeftButton")
     state.shift = false
-    eq(#sent, before, "nothing preached")
-    eq(WordsOfTheLordWindow:IsShown(), true)
-    ns.CloseWindow()
+    eq(#sent, before + 1, "preached")
+    eq(WordsOfTheLordWindow:IsShown(), false)
 end)
 
 test("button: middle-click opens and closes the book without preaching", function()
