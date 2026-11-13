@@ -3,7 +3,7 @@
 ## Notes: Preach the Lord's sayings in chat.
 ## Notes-frFR: Prêche les paroles du Seigneur dans le chat.
 ## Author: davidjacques89
-## Version: 0.1.0
+## Version: 0.2.0
 ## SavedVariables: LaParoleDuSeigneurDB
 ## IconTexture: Interface\Icons\Spell_Holy_HolyBolt
 ## AddonCompartmentFunc: LaParoleDuSeigneur_OnAddonCompartmentClick

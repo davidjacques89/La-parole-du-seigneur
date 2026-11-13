@@ -31,6 +31,21 @@ local strings = {
         REACTIONS_OFF = "Réactions désactivées.",
         LANG_SET = "Langue : %s",
         RESET_DONE = "Réglages remis à zéro (vos paroles sont conservées).",
+        FAV_ADDED = "Favori ajouté : %s",
+        FAV_REMOVED = "Favori retiré : %s",
+        FAV_NOT_FOUND = "Parole introuvable : « %s ». Utilisez la référence, par exemple Jean 3:16.",
+        FAV_LIST_HEADER = "Vos favoris (tirés %dx plus souvent) :",
+        FAV_LIST_EMPTY = "Aucun favori. /parole favori <référence> pour en ajouter.",
+        EXCLUDED_ON = "Parole exclue : %s",
+        EXCLUDED_OFF = "Parole réintégrée : %s",
+        WEIGHT_SET = "Les favoris sont tirés %dx plus souvent.",
+        WEIGHT_BAD = "Choisissez un nombre de 1 à 5.",
+        CAT_ON = "Catégorie activée : %s",
+        CAT_OFF = "Catégorie désactivée : %s",
+        CAT_UNKNOWN = "Catégorie inconnue : « %s ».",
+        CAT_LIST = "Catégories : %s",
+        QUEBEC_NEEDS_QC = "Les paroles du Québec n'apparaissent qu'en mode Québec (/parole langue qc).",
+        LANG_MIGRATED = "Langue par défaut : anglais. Changez-la avec /parole langue fr, qc ou en.",
         TOOLTIP_TITLE = "La parole du seigneur",
         TOOLTIP_LEFT = "Clic gauche : prêcher sur « %s »",
         TOOLTIP_RIGHT = "Clic droit : changer de canal",
@@ -45,7 +60,9 @@ local strings = {
             "|cffffff00/parole auto <minutes>|r  |cffffff00/parole auto off|r : prêche automatique",
             "|cffffff00/parole bouton|r  |cffffff00/parole verrou|r : afficher ou verrouiller le bouton",
             "|cffffff00/parole reactions|r : paroles à la mort et à la résurrection",
-            "|cffffff00/parole langue fr/en/auto|r  |cffffff00/parole reset|r",
+            "|cffffff00/parole favori <référence>|r  |cffffff00/parole favoris|r : favoris, tirés plus souvent",
+            "|cffffff00/parole poids <1-5>|r  |cffffff00/parole exclure <référence>|r  |cffffff00/parole categorie <nom>|r",
+            "|cffffff00/parole langue en/fr/qc|r  |cffffff00/parole reset|r",
         },
         CHANNELS = {
             SAY = "dire", YELL = "crier", EMOTE = "emote", GROUP = "groupe",
@@ -81,6 +98,21 @@ local strings = {
         REACTIONS_OFF = "Reactions off.",
         LANG_SET = "Language: %s",
         RESET_DONE = "Settings reset (your sayings are kept).",
+        FAV_ADDED = "Favorite added: %s",
+        FAV_REMOVED = "Favorite removed: %s",
+        FAV_NOT_FOUND = "Saying not found: \"%s\". Use the reference, for example John 3:16.",
+        FAV_LIST_HEADER = "Your favorites (picked %dx more often):",
+        FAV_LIST_EMPTY = "No favorites yet. /parole fav <reference> to add one.",
+        EXCLUDED_ON = "Saying excluded: %s",
+        EXCLUDED_OFF = "Saying included again: %s",
+        WEIGHT_SET = "Favorites are picked %dx more often.",
+        WEIGHT_BAD = "Choose a number from 1 to 5.",
+        CAT_ON = "Category on: %s",
+        CAT_OFF = "Category off: %s",
+        CAT_UNKNOWN = "Unknown category: \"%s\".",
+        CAT_LIST = "Categories: %s",
+        QUEBEC_NEEDS_QC = "Québec sayings only appear in Québec mode (/parole lang qc).",
+        LANG_MIGRATED = "Default language is now English. Change it with /parole lang fr, qc or en.",
         TOOLTIP_TITLE = "La parole du seigneur",
         TOOLTIP_LEFT = "Left-click: preach on \"%s\"",
         TOOLTIP_RIGHT = "Right-click: change channel",
@@ -95,7 +127,9 @@ local strings = {
             "|cffffff00/parole auto <minutes>|r  |cffffff00/parole auto off|r: auto-preach",
             "|cffffff00/parole button|r  |cffffff00/parole lock|r: show or lock the button",
             "|cffffff00/parole reactions|r: sayings on death and resurrection",
-            "|cffffff00/parole lang fr/en/auto|r  |cffffff00/parole reset|r",
+            "|cffffff00/parole fav <reference>|r  |cffffff00/parole favs|r: favorites, picked more often",
+            "|cffffff00/parole weight <1-5>|r  |cffffff00/parole exclude <reference>|r  |cffffff00/parole category <name>|r",
+            "|cffffff00/parole lang en/fr/qc|r  |cffffff00/parole reset|r",
         },
         CHANNELS = {
             SAY = "say", YELL = "yell", EMOTE = "emote", GROUP = "group",
@@ -106,20 +140,24 @@ local strings = {
 
 ns.strings = strings
 
--- Current language code ("fr" or "en"), resolved from the saved setting.
+-- Sayings language mode: "en" (default), "fr" or "qc" (French library plus Quebec sayings).
 function ns.GetLang()
-    local setting = ns.db and ns.db.lang or "auto"
-    if setting == "fr" or setting == "en" then
+    local setting = ns.db and ns.db.lang
+    if setting == "fr" or setting == "qc" then
         return setting
     end
-    local locale = GetLocale and GetLocale() or "enUS"
-    return (locale:sub(1, 2) == "fr") and "fr" or "en"
+    return "en"
 end
 
--- ns.L.KEY always reads from the current language, falling back to English.
+-- Interface language: English, or French for both "fr" and "qc".
+function ns.UILang()
+    return (ns.GetLang() == "en") and "en" or "fr"
+end
+
+-- ns.L.KEY always reads from the current interface language, falling back to English.
 ns.L = setmetatable({}, {
     __index = function(_, key)
-        local value = strings[ns.GetLang()][key]
+        local value = strings[ns.UILang()][key]
         if value == nil then
             value = strings.en[key]
         end

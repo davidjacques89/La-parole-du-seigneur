@@ -3,13 +3,15 @@
 A World of Warcraft: Forever addon that preaches the Lord's sayings in chat.
 *Un addon pour World of Warcraft: Forever qui prêche les paroles du Seigneur dans le chat.*
 
-- 26 built-in sayings of Jesus, in French (Louis Segond 1910) or English (King James), both public domain
-- Add your own sayings in-game
+- **102 built-in sayings**: 78 Bible verses (Louis Segond 1910 in French, King James in English, both public domain) and 24 traditional Catholic sayings from Quebec
+- **Three languages**: English (default), Français, and Québec (the full French library plus the Québec sayings)
+- **Favorites** are picked more often (3 times by default, adjustable from 1 to 5), and you can exclude sayings or turn whole categories off
+- Add your own sayings in game
 - One-click button (left-click preaches, right-click changes channel, drag to move)
 - Say, yell, emote, group (party/raid/instance picked automatically), raid, guild, or only yourself
 - Optional auto-preach every N minutes (2 minutes minimum, paused in combat)
 - Optional reactions: a saying to your group when you die and when you come back
-- No repeats until every saying has been preached once
+- The same saying never comes up twice in a row
 - Long sayings are split cleanly under WoW's 255-byte chat limit
 
 ## Install
@@ -38,6 +40,21 @@ ln -s ~/path/to/La-parole-du-seigneur/LaParoleDuSeigneur "/Applications/World of
 
 Turn on Lua error display in game with `/console scriptErrors 1`.
 
+## Languages
+
+| Mode | Command | Sayings | Interface text |
+|---|---|---|---|
+| English (default) | `/parole lang en` | English Bible verses (KJV) | English |
+| Français | `/parole langue fr` | French Bible verses (Louis Segond 1910) | French |
+| Québec | `/parole langue qc` | All the French verses **plus** 24 Quebec Catholic sayings | French |
+
+New installs always start in English, whatever the game client's language. Upgrading from 0.1.0 also
+switches you to English once (with a message), unless you had picked French yourself.
+
+The Québec sayings are traditional expressions, prayers and invocations ("Offre ça au bon Dieu",
+"Que le bon Dieu vous le rende", the Sign of the Cross, invocations to Sainte Anne...). Their
+"reference" is a label such as *Dicton populaire* or *Prière traditionnelle*, not an author.
+
 ## Commands
 
 `/parole` or `/lps`. Each command works in French or English.
@@ -47,17 +64,27 @@ Turn on Lua error display in game with `/console scriptErrors 1`.
 | `/parole` | Preach on the default channel |
 | `/parole guilde` (or `dire`, `crier`, `emote`, `groupe`, `raid`, `moi`) | Preach once on that channel |
 | `/parole canal <channel>` / `channel` | Change the default channel |
+| `/parole langue en`, `fr` or `qc` / `lang` | Choose the language mode |
+| `/parole favori Jean 3:16` / `fav John 3:16` | Add or remove a favorite, by reference |
+| `/parole favoris` / `favs` | List your favorites |
+| `/parole poids 1-5` / `weight` | How much more often favorites come up (default 3) |
+| `/parole exclure <reference>` / `exclude` | Never preach this saying (toggle) |
+| `/parole categorie` / `category` | List categories; add a name to turn one on or off |
 | `/parole ajouter <text>` / `add` | Add your own saying |
-| `/parole liste` / `list` | List your sayings |
-| `/parole retirer <#>` / `remove` | Remove one of your sayings |
+| `/parole liste` / `list` | List your own sayings |
+| `/parole retirer <#>` / `remove` | Remove one of your own sayings |
 | `/parole integrees` / `builtin` | Built-in sayings on/off (keep only yours) |
 | `/parole auto 15 guilde` | Auto-preach every 15 minutes on guild chat |
 | `/parole auto off` | Stop auto-preach |
 | `/parole bouton` / `button` | Show/hide the button |
 | `/parole verrou` / `lock` | Lock/unlock the button's position |
 | `/parole reactions` | Sayings on death and resurrection (group only) |
-| `/parole langue fr` / `lang en` / `auto` | Language of the sayings and messages |
-| `/parole reset` | Reset settings (your sayings are kept) |
+| `/parole reset` | Reset settings to defaults (your sayings, favorites and exclusions are kept) |
+
+Categories: Words of Jesus, Proverbs, Psalms, Ecclesiastes, Other scripture, Québec.
+Favorites and exclusions are saved by saying, so they stay when you switch language.
+
+An in-game settings screen and library browser are planned for the next version.
 
 ## Good to know
 
@@ -70,11 +97,12 @@ Turn on Lua error display in game with `/console scriptErrors 1`.
 ```
 LaParoleDuSeigneur/
   LaParoleDuSeigneur.toc   addon metadata (Interface 16001 = WoW Forever 1.60.1)
-  Locales.lua              interface text, French and English
-  Sayings.lua              the built-in sayings (edit freely)
-  Core.lua                 settings, picking and sending sayings, auto-preach, reactions
+  Locales.lua              interface text, French and English; language modes
+  Sayings.lua              the sayings library (generated, see tools/)
+  Core.lua                 settings, migration, picking (favorites, weights), sending, auto-preach, reactions
   Button.lua               the draggable button
   Commands.lua             slash commands
+tools/                     regenerate Sayings.lua from the public-domain Bible texts (see tools/README.md)
 tests/run.lua              offline tests with a fake WoW API: lua5.1 tests/run.lua
 .pkgmeta                   packaging config for CurseForge / Wago
 ```

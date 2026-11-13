@@ -52,8 +52,7 @@ commands.list = function()
             ns.Print(("%d. %s"):format(i, preview(text, 120)))
         end
     end
-    local builtin = #(ns.sayings[ns.GetLang()] or {})
-    ns.Print(L.LIST_BUILTIN:format(builtin, ns.db.useBuiltin and "on" or "off"))
+    ns.Print(L.LIST_BUILTIN:format(#ns.GetLibrary(), ns.db.useBuiltin and "on" or "off"))
 end
 
 commands.remove = function(rest)
@@ -124,12 +123,99 @@ end
 
 commands.lang = function(rest)
     rest = (rest or ""):lower()
-    if rest == "fr" or rest == "en" or rest == "auto" then
-        ns.db.lang = rest
-    else
-        ns.db.lang = (ns.GetLang() == "fr") and "en" or "fr"
+    local aliases = { en = "en", english = "en", anglais = "en", fr = "fr", ["français"] = "fr", francais = "fr",
+                      qc = "qc", quebec = "qc", ["québec"] = "qc" }
+    local choice = aliases[rest]
+    if not choice then
+        -- No valid name: step through English, French, Québec.
+        local order = { en = "fr", fr = "qc", qc = "en" }
+        choice = order[ns.GetLang()]
     end
-    ns.Print(L.LANG_SET:format(ns.db.lang))
+    ns.db.lang = choice
+    ns.ResetBag()
+    ns.Print(L.LANG_SET:format(({ en = "English", fr = "Français", qc = "Québec" })[choice]))
+end
+
+-- Find a saying from a typed reference, or print why not.
+local function findByRef(rest)
+    local shown = ns.FindSayingByRef(rest)
+    if not shown then
+        if ns.db.lang ~= "qc" and rest and rest:lower():find("^qu") then
+            ns.Print(L.QUEBEC_NEEDS_QC)
+        else
+            ns.Print(L.FAV_NOT_FOUND:format(rest or ""))
+        end
+    end
+    return shown
+end
+
+commands.fav = function(rest)
+    local shown = findByRef(rest)
+    if not shown then return end
+    if ns.ToggleFavorite(shown.id) then
+        ns.Print(L.FAV_ADDED:format(shown.ref))
+    else
+        ns.Print(L.FAV_REMOVED:format(shown.ref))
+    end
+end
+
+commands.favs = function()
+    local names = {}
+    for _, shown in ipairs(ns.GetLibrary()) do
+        if shown.favorite then
+            names[#names + 1] = shown.ref .. " — " .. preview(shown.text, 50)
+        end
+    end
+    if #names == 0 then
+        ns.Print(L.FAV_LIST_EMPTY)
+        return
+    end
+    ns.Print(L.FAV_LIST_HEADER:format(ns.FavoriteWeight()))
+    for _, line in ipairs(names) do
+        ns.Print(line)
+    end
+end
+
+commands.exclude = function(rest)
+    local shown = findByRef(rest)
+    if not shown then return end
+    if ns.ToggleExcluded(shown.id) then
+        ns.Print(L.EXCLUDED_ON:format(shown.ref))
+    else
+        ns.Print(L.EXCLUDED_OFF:format(shown.ref))
+    end
+end
+
+commands.weight = function(rest)
+    local n = tonumber(rest)
+    if not n or n < 1 or n > 5 then
+        ns.Print(L.WEIGHT_BAD)
+        return
+    end
+    ns.db.favoriteWeight = math.floor(n)
+    ns.Print(L.WEIGHT_SET:format(ns.db.favoriteWeight))
+end
+
+-- /parole category            -> list categories and whether each is on
+-- /parole category proverbes  -> toggle one
+commands.category = function(rest)
+    if not rest or rest == "" then
+        local parts = {}
+        for _, category in ipairs(ns.CATEGORIES) do
+            local name = category[ns.UILang()]
+            parts[#parts + 1] = (ns.CategoryEnabled(category.key) and "+" or "-") .. name
+        end
+        ns.Print(L.CAT_LIST:format(table.concat(parts, ", ")))
+        return
+    end
+    local category = ns.FindCategory(rest)
+    if not category then
+        ns.Print(L.CAT_UNKNOWN:format(rest))
+        return
+    end
+    local enable = not ns.CategoryEnabled(category.key)
+    ns.SetCategory(category.key, enable)
+    ns.Print((enable and L.CAT_ON or L.CAT_OFF):format(category[ns.UILang()]))
 end
 
 commands.reset = function()
@@ -152,6 +238,12 @@ local aliases = {
     verrou = "lock", lock = "lock",
     reactions = "reactions", ["réactions"] = "reactions",
     langue = "lang", lang = "lang", language = "lang",
+    favori = "fav", fav = "fav", favorite = "fav",
+    favoris = "favs", favs = "favs", favorites = "favs",
+    exclure = "exclude", exclude = "exclude",
+    poids = "weight", weight = "weight",
+    categorie = "category", ["catégorie"] = "category", category = "category",
+    categories = "category", ["catégories"] = "category",
     reset = "reset",
 }
 
