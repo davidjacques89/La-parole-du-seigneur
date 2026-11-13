@@ -1,0 +1,9 @@
+package-as: La-parole-du-seigneur
+
+# The addon lives in a subfolder; ship only that folder, under the name the .toc expects.
+move-folders:
+  La-parole-du-seigneur/LaParoleDuSeigneur: LaParoleDuSeigneur
+
+ignore:
+  - tools
+  - tests

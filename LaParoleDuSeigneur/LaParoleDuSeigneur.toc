@@ -1,0 +1,17 @@
+## Interface: 16001
+## Title: La parole du seigneur
+## Notes: Preach the Lord's sayings in chat.
+## Notes-frFR: Prêche les paroles du Seigneur dans le chat.
+## Author: davidjacques89
+## Version: 0.2.1
+## SavedVariables: LaParoleDuSeigneurDB
+## IconTexture: Interface\Icons\Spell_Holy_HolyBolt
+## AddonCompartmentFunc: LaParoleDuSeigneur_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: LaParoleDuSeigneur_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: LaParoleDuSeigneur_OnAddonCompartmentLeave
+
+Locales.lua
+Sayings.lua
+Core.lua
+Button.lua
+Commands.lua
